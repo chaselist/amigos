@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>比賽進行中 - Amigo X</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 500px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      color: #F25A94;
+      margin-bottom: 1rem;
+    }
+    .section {
+      margin-top: 1.5rem;
+    }
+    label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1rem;
+      background-color: #F25A94;
+      color: white;
+      font-weight: bold;
+    }
+    .info {
+      font-size: 1.1rem;
+      padding: 0.6rem;
+      background: #222;
+      border-radius: 8px;
+      margin-bottom: 0.3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .info button {
+      width: auto;
+      font-size: 1rem;
+      background-color: #5EC3E4;
+      margin-left: auto;
+      padding: 0.2rem 0.6rem;
+    }
+    .next-batters {
+      font-size: 0.85rem;
+      color: #ccc;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .scoreboard {
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      background: #222;
+      padding: 0.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .bases {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 0.3rem;
+      justify-items: center;
+      align-items: center;
+      margin: 1rem auto;
+      max-width: 250px;
+    }
+    .base {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #333;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      border: 2px solid #fff;
+      position: relative;
+      text-align: center;
+    }
+    .base.active {
+      background: #5EC3E4;
+      color: #111;
+    }
+    .base-menu {
+      position: absolute;
+      background: #fff;
+      color: #000;
+      border-radius: 6px;
+      padding: 0.5rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.3rem;
+      z-index: 10;
+    }
+    .base-menu.show {
+      display: flex !important;
+    }
+    .base-menu button {
+      padding: 0.3rem;
+      font-size: 0.9rem;
+      background: #f0f0f0;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>比賽進行中</h1>
+  <div class="section">
+    <div class="info" id="currentBatter">目前打者：<span id="batterName">-</span><button id="changeBtn">換人</button></div>
+    <div class="next-batters" id="nextBatters">下一棒：-　再下一棒：-</div>
+    <div class="scoreboard">
+      <div>局數：<span id="inning">1</span>　得分：<span id="score">0</span>　出局數：<span id="outs">0</span></div>
+    </div>
+    <label for="result">打席結果：</label>
+    <select id="result">
+      <option value="">請選擇</option>
+      <option>一安</option>
+      <option>二安</option>
+      <option>三安</option>
+      <option>全壘打</option>
+      <option>觸身</option>
+      <option>保送</option>
+      <option>三振</option>
+      <option>內滾</option>
+      <option>外飛</option>
+      <option>野選</option>
+    </select>
+    <div class="bases">
+      <div></div>
+      <div class="base" id="2B">2B<div class="base-menu" id="menu-2B"></div></div>
+      <div></div>
+      <div class="base" id="3B">3B<div class="base-menu" id="menu-3B"></div></div>
+      <div></div>
+      <div class="base" id="1B">1B<div class="base-menu" id="menu-1B"></div></div>
+      <div></div>
+      <div class="base" id="home">得分<div class="base-menu" id="menu-home"></div></div>
+      <div></div>
+    </div>
+    <button id="nextBtn">下一棒</button>
+  </div>
+  <button id="endGameBtn" style="background-color:#444; margin-top:2rem; font-size:1rem; width:100%; padding:0.6rem; border-radius:8px; font-weight:bold;">比賽結束</button>
+  <script>
+    let score = 0;
+    const scoreEl = document.getElementById("score");
+
+    ['1B', '2B', '3B', 'home'].forEach(id => {
+      const base = document.getElementById(id);
+      const menu = document.getElementById('menu-' + id);
+      if (!base || !menu) return;
+
+      base.addEventListener('click', () => base.classList.toggle('active'));
+
+      base.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        menu.innerHTML = '';
+
+        if (id === 'home') {
+          ['+1', '+2', '+3'].forEach(n => {
+            const btn = document.createElement('button');
+            btn.textContent = n;
+            btn.onclick = () => {
+              score += parseInt(n);
+              scoreEl.textContent = score;
+              menu.classList.remove('show');
+            };
+            menu.appendChild(btn);
+          });
+        } else {
+          ['盜壘', '盜失'].forEach(type => {
+            const btn = document.createElement('button');
+            btn.textContent = type;
+            btn.onclick = function () {
+              const next = id === '1B' ? '2B' : id === '2B' ? '3B' : id === '3B' ? 'home' : null;
+              base.classList.remove('active');
+              if (type === '盜壘' && next) {
+                document.getElementById(next).classList.add('active');
+              }
+              menu.classList.remove('show');
+            };
+            menu.appendChild(btn);
+          });
+        }
+        document.querySelectorAll('.base-menu').forEach(m => m.classList.remove('show'));
+        menu.classList.add('show');
+      });
+    });
+
+    // [換人] 按鈕功能（測試版，跳出 prompt）
+    document.getElementById('changeBtn').addEventListener('click', () => {
+      const batter = document.getElementById('batterName');
+      const replacement = prompt(`請輸入要替換「${batter.textContent}」的球員姓名：`);
+      if (replacement) batter.textContent = replacement;
+    });
+  </script>
+</body>
+</html>

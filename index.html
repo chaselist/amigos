@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amigo X 世壯運 賽事紀錄</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 1rem;
+      max-width: 500px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #f2f2f2;
+      border-bottom: 3px solid #F25A94;
+      padding-bottom: 0.5rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+    }
+    input[type="text"], select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 0.5rem;
+    }
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .radio-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .btn {
+      width: 100%;
+      background-color: #F25A94;
+      color: white;
+      padding: 1rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .btn:hover {
+      background-color: #e94885;
+    }
+    .batting-select {
+      margin-bottom: 0.6rem;
+    }
+    .batting-select select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .inline-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .inline-btn input {
+      flex: 1;
+    }
+    .small-btn {
+      background: #5EC3E4;
+      color: #111;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Amigo X 世壯運 賽事紀錄</h1>
+
+  <label>比賽名稱：</label>
+  <input type="text" placeholder="2025/5/18 vs XXX隊">
+
+  <div class="radio-group">
+    <div class="radio-option">
+      <input type="radio" name="team" checked>
+      <span>主隊</span>
+    </div>
+    <div class="radio-option">
+      <input type="radio" name="team">
+      <span>客隊</span>
+    </div>
+    <div class="radio-option">
+      <input type="radio" name="game" id="baseball" checked onchange="generateBattingOrder()">
+      <span>棒球</span>
+    </div>
+    <div class="radio-option">
+      <input type="radio" name="game" id="softball" onchange="generateBattingOrder()">
+      <span>壘球</span>
+    </div>
+  </div>
+
+  <label>新增球員姓名：</label>
+  <div class="inline-btn">
+    <input type="text" id="newPlayer" placeholder="Amigo!大勝利！">
+    <button class="small-btn" onclick="addNewPlayer()">＋</button>
+  </div>
+
+  <label>請選擇打序：</label>
+  <div id="battingOrder"></div>
+
+  <label>先發投手：</label>
+  <select id="startingPitcher">
+    <option value="">請選擇</option>
+  </select>
+
+  <a href="game.html"><button class="btn">開始比賽</button></a>
+
+  <script>
+    const players = [
+      "林皓瑋", "陳冠廷", "黃昱愷", "楊念儒", "謝琮諺", "黃浩勝", "施維恆",
+      "李政達", "陳重任", "曾憲奎", "陳啟明", "莊智凱", "林家仰", "周易村",
+      "江長運", "黃崇祐", "吳俊洲", "林楷皓", "張友銘"
+    ];
+
+    let battingTotal = 9;
+
+    function generateBattingOrder() {
+      const container = document.getElementById("battingOrder");
+      container.innerHTML = "";
+      const isSoftball = document.getElementById("softball").checked;
+      battingTotal = isSoftball ? 12 : 9;
+      for (let i = 0; i < battingTotal; i++) {
+        const select = document.createElement("select");
+        select.id = `batter${i}`;
+        select.addEventListener("change", () => updateAllBattingOptions(battingTotal));
+        container.appendChild(select);
+      }
+      updateAllBattingOptions(battingTotal);
+    }
+
+    function updateAllBattingOptions(total) {
+      const selected = Array.from({ length: total }, (_, i) => document.getElementById(`batter${i}`)?.value);
+      for (let i = 0; i < total; i++) {
+        const select = document.getElementById(`batter${i}`);
+        const currentValue = select.value;
+        select.innerHTML = "";
+        const defaultOption = document.createElement("option");
+        defaultOption.textContent = `第 ${i + 1} 棒 - 請選擇`;
+        defaultOption.value = "";
+        select.appendChild(defaultOption);
+        players.forEach(name => {
+          if (!selected.includes(name) || name === currentValue) {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            if (name === currentValue) option.selected = true;
+            select.appendChild(option);
+          }
+        });
+      }
+    }
+
+    function updatePitcherList() {
+      const pitcherSelect = document.getElementById("startingPitcher");
+      pitcherSelect.innerHTML = "";
+      const defaultOption = document.createElement("option");
+      defaultOption.textContent = "請選擇";
+      defaultOption.value = "";
+      pitcherSelect.appendChild(defaultOption);
+      players.forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        pitcherSelect.appendChild(option);
+      });
+    }
+
+    function addNewPlayer() {
+      const name = document.getElementById("newPlayer").value.trim();
+      if (name && !players.includes(name)) {
+        players.push(name);
+        generateBattingOrder();
+        updatePitcherList();
+      }
+      document.getElementById("newPlayer").value = "";
+    }
+
+    generateBattingOrder();
+    updatePitcherList();
+  </script>
+</body>
+</html>

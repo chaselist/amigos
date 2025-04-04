@@ -1,0 +1,211 @@
+<!-- 守備統計區塊（美化版，統一 UI 風格） -->
+<style>
+  .section {
+    margin-top: 2rem;
+    background-color: #111;
+    border-radius: 12px;
+    padding: 1rem;
+    color: #fff;
+  }
+  .section h2 {
+    color: #ff4fa0;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+  }
+  th, td {
+    border: 1px solid #444;
+    padding: 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  th {
+    background-color: #222;
+    color: #fff;
+  }
+  tr:nth-child(even) {
+    background-color: #1a1a1a;
+  }
+  tr:nth-child(odd) {
+    background-color: #2a2a2a;
+  }
+  .stat-button {
+    width: 28px;
+    height: 28px;
+    line-height: 1;
+    font-size: 1rem;
+    font-weight: bold;
+    margin: 0 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .stat-button.plus {
+    background-color: #4ec1e0;
+    color: white;
+  }
+  .stat-button.plus:hover {
+    background-color: #35a5c6;
+  }
+  .stat-button.minus {
+    background-color: #d9534f;
+    color: white;
+  }
+  .stat-button.minus:hover {
+    background-color: #c9302c;
+  }
+  select {
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #666;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .position-cell select {
+    width: 60px;
+  }
+  td:first-child {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  td span {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+  }
+</style>
+
+<div class="section" id="defenseSection">
+  <h2>守備成績紀錄</h2>
+  <div style="margin-bottom: 1rem; font-size: 1rem;">
+    當前出局數：<span id="outsDisplay">0</span> / 3
+  </div>
+  <button onclick="incrementOuts()" style="margin-bottom: 1rem; font-size: 1rem; padding: 6px 10px;">+ 出局</button>
+  <table>
+    <thead>
+      <tr>
+        <th>球員</th>
+        <th>守位</th>
+        <th>內野成功</th>
+        <th>內野失誤</th>
+        <th>外野成功</th>
+        <th>外野失誤</th>
+      </tr>
+    </thead>
+    <tbody id="fieldingStats"></tbody>
+  </table>
+</div>
+
+<div class="section" id="battingSection" style="display: none;">
+  <h2>（打擊區塊）打擊紀錄區：尚未設計，這是示意切換區域</h2>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const fieldingData = {};
+  const fieldingTable = document.getElementById('fieldingStats');
+  const players = ["林皓瑋", "陳冠廷", "黃昱愷", "楊念儒", "謝琮諺", "黃浩勝"];
+  const positions = ["P", "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "FE"];
+  let outs = 0;
+
+  function createButton(player, type, isIncrement) {
+    const btn = document.createElement('button');
+    btn.className = 'stat-button ' + (isIncrement ? 'plus' : 'minus');
+    btn.textContent = isIncrement ? '+' : '-';
+    btn.addEventListener('click', () => {
+      if (isIncrement) {
+        fieldingData[player][type]++;
+      } else {
+        fieldingData[player][type] = Math.max(0, fieldingData[player][type] - 1);
+      }
+      updateTable();
+    });
+    return btn;
+  }
+
+  function createDropdown(player) {
+    const sel = document.createElement('select');
+    positions.forEach(pos => {
+      const opt = document.createElement('option');
+      opt.value = pos;
+      opt.textContent = pos;
+      sel.appendChild(opt);
+    });
+    sel.value = fieldingData[player].position;
+    sel.addEventListener('change', () => {
+      fieldingData[player].position = sel.value;
+      updateTable();
+    });
+    return sel;
+  }
+
+  function updateTable() {
+    fieldingTable.innerHTML = '';
+    Object.entries(fieldingData)
+      .filter(([_, stats]) => stats.position !== '')
+      .forEach(([name, stats]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = '';
+        const nameCell = document.createElement('td');
+        nameCell.textContent = name;
+        const positionCell = document.createElement('td');
+        positionCell.className = 'position-cell';
+        positionCell.appendChild(createDropdown(name));
+        const inSuccessCell = document.createElement('td');
+        inSuccessCell.innerHTML = `<span>${stats.inSuccess}</span>`;
+        inSuccessCell.appendChild(createButton(name, 'inSuccess', true));
+        inSuccessCell.appendChild(createButton(name, 'inSuccess', false));
+        const inErrorCell = document.createElement('td');
+        inErrorCell.innerHTML = `<span>${stats.inError}</span>`;
+        inErrorCell.appendChild(createButton(name, 'inError', true));
+        inErrorCell.appendChild(createButton(name, 'inError', false));
+        const outSuccessCell = document.createElement('td');
+        outSuccessCell.innerHTML = `<span>${stats.outSuccess}</span>`;
+        outSuccessCell.appendChild(createButton(name, 'outSuccess', true));
+        outSuccessCell.appendChild(createButton(name, 'outSuccess', false));
+        const outErrorCell = document.createElement('td');
+        outErrorCell.innerHTML = `<span>${stats.outError}</span>`;
+        outErrorCell.appendChild(createButton(name, 'outError', true));
+        outErrorCell.appendChild(createButton(name, 'outError', false));
+
+        row.appendChild(nameCell);
+        row.appendChild(positionCell);
+        row.appendChild(inSuccessCell);
+        row.appendChild(inErrorCell);
+        row.appendChild(outSuccessCell);
+        row.appendChild(outErrorCell);
+
+        fieldingTable.appendChild(row);
+      });
+  }
+
+  window.incrementOuts = function () {
+    outs++;
+    if (outs >= 3) {
+      alert("三出局，切換攻守！");
+      outs = 0;
+      document.getElementById('defenseSection').style.display = 'none';
+      document.getElementById('battingSection').style.display = 'block';
+      document.getElementById('battingSection').scrollIntoView({ behavior: 'smooth' });
+    }
+    document.getElementById('outsDisplay').textContent = outs;
+  }
+
+  players.forEach(name => {
+    fieldingData[name] = {
+      position: positions[Math.floor(Math.random() * positions.length)],
+      inSuccess: Math.floor(Math.random() * 3),
+      inError: Math.floor(Math.random() * 2),
+      outSuccess: Math.floor(Math.random() * 3),
+      outError: Math.floor(Math.random() * 2)
+    };
+  });
+
+  updateTable();
+});
+</script>
